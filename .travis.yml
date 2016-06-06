@@ -6,7 +6,7 @@ addons:
 node_js:
   - '4.2'
 before_script:
-  - sudo setcap 'cap_net_bind_service=+ep' $(readlink -f $(which node))
+  - iptables -t nat -I OUTPUT -p tcp -d 127.0.0.1 --dport 80 -j REDIRECT --to-ports 9435
 cache:
   directories:
   - node_modules
