@@ -33,8 +33,9 @@ const Builder = webdriver.Builder;
 const until = webdriver.until;
 const connect = require('connect');
 const server = connect();
+const port = process.env.SAUCE_LABS_USER ? 80 : 9435;
 server.use(require('serve-static')(process.cwd()));
-server.listen(9435);
+server.listen(port);
 
 let nodeTests = []
 let webTests = []
@@ -75,7 +76,6 @@ glob('lib/**/*.spec.js').then((tests) => {
 			console.error(err)
 	});
 
-
 function runWebTest(browser) {
 	const builder = new Builder();
 	let driver = builder.forBrowser(browser);
@@ -84,7 +84,7 @@ function runWebTest(browser) {
 	driver = driver.build();
 	let task = null;
 	if(process.env.SAUCE_LABS_USER !== undefined || !process.env.TRAVIS_JOB_NUMBER)
-		task = driver.get('http://localhost:9435/test/testrunner.html')
+		task = driver.get('http://localhost:' + port + '/test/testrunner.html')
 	else
 		return; // TODO: phantomjs?
 
