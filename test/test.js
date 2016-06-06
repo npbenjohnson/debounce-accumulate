@@ -1,6 +1,7 @@
 /* eslint-disable */
 'use strict';
 // Test libraries
+const child_process = require('child_process');
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
 const sinon = require('sinon');
@@ -33,9 +34,8 @@ const Builder = webdriver.Builder;
 const until = webdriver.until;
 const connect = require('connect');
 const server = connect();
-const port = process.env.SAUCE_LABS_USER ? 80 : 9435;
 server.use(require('serve-static')(process.cwd()));
-server.listen(port);
+server.listen(9435);
 
 let nodeTests = []
 let webTests = []
@@ -84,7 +84,7 @@ function runWebTest(browser) {
 	driver = driver.build();
 	let task = null;
 	if(process.env.SAUCE_LABS_USER !== undefined || !process.env.TRAVIS_JOB_NUMBER)
-		task = driver.get('http://localhost:' + port + '/test/testrunner.html')
+		task = driver.get('http://localhost:9435/test/testrunner.html')
 	else
 		return; // TODO: phantomjs?
 
