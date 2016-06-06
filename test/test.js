@@ -78,12 +78,12 @@ glob('lib/**/*.spec.js').then((tests) => {
 function runWebTest(browser) {
 	const builder = new Builder();
 	let driver = builder.forBrowser(browser);
-	if(process.env.SAUCE_LABS_USER !== undefined)
-		driver = driver.usingServer('http://' + process.env.SAUCE_LABS_USER + ':' + process.env.SAUCE_LABS_AUTH_TOKEN + '@ondemand.saucelabs.com/wd/hub')
+	if(process.env.SAUCE_USERNAME !== undefined)
+		driver = driver.usingServer('http://' + process.env.SAUCE_USERNAME + ':' + process.env.SAUCE_ACCESS_KEY + '@ondemand.saucelabs.com/wd/hub')
 	driver = driver.build();
 	let task = null;
-	if(process.env.SAUCE_LABS_USER !== undefined || !process.env.TRAVIS_JOB_NUMBER)
-		task = driver.get('http://localhost:' + (process.env.SAUCE_LABS_USER ? 80 : 9435) + '/test/testrunner.html')
+	if(process.env.SAUCE_USERNAME !== undefined || !process.env.TRAVIS_JOB_NUMBER)
+		task = driver.get('http://localhost:' + (process.env.SAUCE_USERNAME ? 80 : 9435) + '/test/testrunner.html')
 	else
 		return; // TODO: phantomjs?
 

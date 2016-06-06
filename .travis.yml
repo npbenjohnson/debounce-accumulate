@@ -2,9 +2,7 @@ git:
   depth: 1
 language: node_js
 addons:
-  sauce_connect:
-    username: "${SAUCE_LABS_USER}"
-    access_key: "${SAUCE_LABS_AUTH_TOKEN}"
+  sauce_connect: true
 node_js:
   - '4.2'
 before_script:
