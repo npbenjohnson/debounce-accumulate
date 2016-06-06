@@ -31,6 +31,30 @@ const glob = denodeify(require('glob'));
 const webdriver = require('selenium-webdriver');
 const Builder = webdriver.Builder;
 const until = webdriver.until;
+
+let seleniumCaps = []
+if(process.env.SAUCE_LABS_USER) // sauce labs tests
+	seleniumCaps = [{
+	browserName: 'internet explorer',
+	platform: 'Windows 10',
+	'tunnel-identifier': process.env.TRAVIS_JOB_NUMBER
+}, {
+	browserName: 'firefox',
+	'tunnel-identifier': process.env.TRAVIS_JOB_NUMBER
+}, {
+	browserName: 'chrome',
+	'tunnel-identifier': process.env.TRAVIS_JOB_NUMBER
+}];
+else if(!process.env.TRAVIS_JOB_NUMBER) // local tests
+	seleniumCaps = [{
+	browserName: 'internet explorer'
+}, {
+	browserName: 'firefox'
+}, {
+	browserName: 'chrome'
+}];
+
+// Server for selenium
 const connect = require('connect');
 const server = connect();
 server.use(require('serve-static')(process.cwd()));
@@ -38,52 +62,50 @@ server.listen(9435);
 
 let nodeTests = []
 let webTests = []
-
 // Find tests
-glob('lib/**/*.spec.js').then((tests) => {
-		nodeTests = tests.filter(test => !test.endsWith('.web.spec.js'))
-		webTests = tests.filter(test => !test.endsWith('.node.spec.js'))
-		return createWebTestScript()
-	})
-	.then(() => {
-		// Run web tests in each browser
-		if(webTests.length > 0) {
-			console.log('Testing IE: ')
-			return runWebTest('ie')
-				.then(() => {
-					console.log('Testing FF: ')
-					return runWebTest('firefox')
-				})
-				.then(() => {
-					console.log('Testing Chrome: ')
-					return runWebTest('chrome')
-				})
-		}
-	})
-	.then(() => {
-		// Run node tests
-		if(nodeTests.length > 0) {
-			console.log('Testing Node: ')
-			return Promise.all(nodeTests.map((test) => System.import(test)))
-		}
-	})
-	.then(run)
-	.catch(function(err) {
-		if(err instanceof Error)
-			console.error(err.stack)
-		else
-			console.error(err)
-	});
+glob('lib/**/*.spec.js')
+.then((tests) => {
+	nodeTests = tests.filter(test => !test.endsWith('.web.spec.js'))
+	webTests = tests.filter(test => !test.endsWith('.node.spec.js'))
+	return createWebTestScript()
+})
+.then(() => {
+	// Run web tests in each browser
+	if(webTests.length > 0){
+		let promise = Promise.resolve();
+		seleniumCaps.forEach(cap => {
+			promise = promise.then(() =>{
+				console.log('Testing', cap.browserName);
+				return runWebTest(cap);
+			})
+		});
+		return promise;
+	}
+})
+.then(() => {
+	// Run node tests
+	if(nodeTests.length > 0) {
+		console.log('Testing Node: ')
+		return Promise.all(nodeTests.map((test) => System.import(test)))
+	}
+})
+.then(run)
+.catch(function(err) {
+	if(err instanceof Error)
+		console.error(err.stack)
+	else
+		console.error(err)
+});
 
-function runWebTest(browser) {
+function runWebTest(capabilities) {
 	const builder = new Builder();
-	let driver = builder.forBrowser(browser);
-	if(process.env.SAUCE_USERNAME !== undefined)
-		driver = driver.usingServer('http://' + process.env.SAUCE_USERNAME + ':' + process.env.SAUCE_ACCESS_KEY + '@ondemand.saucelabs.com/wd/hub')
+	let driver = builder.withCapabilities(capabilities);
+	if(process.env.SAUCE_LABS_USER !== undefined)
+		driver = driver.usingServer('http://' + process.env.SAUCE_LABS_USER + ':' + process.env.SAUCE_LABS_AUTH_TOKEN + '@ondemand.saucelabs.com/wd/hub')
 	driver = driver.build();
 	let task = null;
-	if(process.env.SAUCE_USERNAME !== undefined || !process.env.TRAVIS_JOB_NUMBER)
-		task = driver.get('http://localhost:' + (process.env.SAUCE_USERNAME ? 80 : 9435) + '/test/testrunner.html')
+	if(process.env.SAUCE_LABS_USER !== undefined || !process.env.TRAVIS_JOB_NUMBER)
+		task = driver.get('http://localhost:' + (process.env.SAUCE_LABS_USER ? 80 : 9435) + '/test/testrunner.html')
 	else
 		return; // TODO: phantomjs?
 
@@ -99,15 +121,15 @@ function runWebTest(browser) {
 			results.forEach(function(result) {
 				if(result && result[0] !== 'stdout:') // swallow undefined and color info :(
 					if(!Array.isArray(result)) {
-						// Log regular calls
-						console.log(result);
-					} else {
-						// Trap error output
-						if(result[0] === '%d failing' && result[1] > 0)
-							process.exitCode = 1
-							// Write info
-						console.log.apply(console, result);
-					}
+					// Log regular calls
+					console.log(result);
+				} else {
+					// Trap error output
+					if(result[0] === '%d failing' && result[1] > 0)
+						process.exitCode = 1
+						// Write info
+					console.log.apply(console, result);
+				}
 			})
 			return driver.quit();
 		})
