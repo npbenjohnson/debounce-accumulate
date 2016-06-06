@@ -51,3 +51,6 @@ packages
 
 # merge
 *.orig
+
+# web tests
+tests.generated.js
