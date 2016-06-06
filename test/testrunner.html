@@ -1,0 +1,58 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="../node_modules/mocha/mocha.css">
+    <script src="../node_modules/mocha/mocha.js"></script>
+    <script src="../node_modules/chai/chai.js"></script>
+    <script src="../node_modules/chai-as-promised/lib/chai-as-promised.js"></script>
+    <script src="../node_modules/sinon/pkg/sinon.js"></script>
+    <script src="../node_modules/sinon-chai/lib/sinon-chai.js"></script>
+    <script src="../node_modules/systemjs/dist/system.src.js"></script>
+    <script>System.config({ baseURL: '../' })</script>
+    <script src="systemjs-config.js"></script>
+    <script>
+      // Hack mocha spec reporter console log
+      window.mocha.setup({ui:'bdd', reporter: 'Spec', timeout: 20000});
+      var oldLog = console.log;
+      window.testResults = []
+      console.log = function(){
+        // Pass through logging
+        oldLog.apply(console, arguments)
+        // Add log entry to testResults
+        window.testResults.push(Array.prototype.slice.call(arguments))
+      }
+      window.expect = window.chai.expect;
+      window.assert = window.chai.assert;
+      // sinon (mocking framework) cleanup hooks
+      mocha.suite.beforeEach(function() {
+        this.sinon = sinon.sandbox.create();
+      });
+      mocha.suite.afterEach(function() {
+        this.sinon.restore();
+      });
+    </script>
+  </head>
+  <body>
+    <div id="mocha"></div>
+    <script>
+      // Set up the test framework
+      
+      System.import('./tests.generated.js')
+      
+      .then(function(tests){ 
+        return Promise.all(tests()); // import tests
+      })
+      .then(function(){
+        mocha.suite.afterAll(function(){ window.testsFinished = true;}) // set status for webdriver
+        mocha.run(); // run mocha
+      })
+      .catch(function(err){
+        if(err instanceof Error)
+          console.error(err.stack)
+        else
+          console.error(err)
+      })
+    </script>
+  </body>
+</html>

@@ -1,0 +1,28 @@
+{
+	"env": {
+		"es6": true,
+		"browser": true,
+		"mocha": true,
+		"jasmine": true
+	},
+	"extends": "eslint:recommended",
+	"parserOptions": {
+		"ecmaVersion": 6,
+		"sourceType": "module"
+	},
+	"rules": {
+		"array-bracket-spacing": ["error", "never"],
+		"block-spacing": ["error", "always"],
+		"comma-spacing": ["error", { "before": false, "after": true }],
+		"computed-property-spacing": ["error", "never"],
+		"keyword-spacing": ["error", {"before":true, "after":true}],
+		"no-console": ["off"],
+		"no-spaced-func": "error",
+		"no-trailing-spaces": "error",
+		"no-whitespace-before-property": "error",
+		"no-mixed-spaces-and-tabs": "off",
+		"object-curly-spacing": ["error","never"],
+		"semi-spacing": ["error", {"before": false, "after": true}],
+		"arrow-spacing": ["error", { "before": true, "after": true }]
+	}
+}
