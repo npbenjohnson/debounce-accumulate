@@ -3,7 +3,7 @@
   "description": "",
   "main": "index.js",
   "registry": "jspm",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "scripts": {
     "test": "mocha --harmony test/test.js",
     "postinstall": "jspm install",
